@@ -1,28 +1,41 @@
 {
-  "2ee1efe6-b8cb-4cf6-9ddd-5ce6236e8920": {
-    "id": "2ee1efe6-b8cb-4cf6-9ddd-5ce6236e8920",
-    "title": "зигануть",
-    "description": "",
+  "127d04e2-563c-4cb8-9ecf-3543607dafea": {
+    "id": "127d04e2-563c-4cb8-9ecf-3543607dafea",
+    "title": "Done coding",
+    "description": "just start vibecoding",
     "status": 2
   },
-  "5467458d-dbee-4922-af25-ff3e4ee4570e": {
-    "id": "5467458d-dbee-4922-af25-ff3e4ee4570e",
-    "title": "Поспать",
+  "33d74ddd-56d4-48a7-b48a-d8986408c4d6": {
+    "id": "33d74ddd-56d4-48a7-b48a-d8986408c4d6",
+    "title": "VIBBBBBING",
     "description": "",
-    "status": 2,
-    "time_spent": 940
+    "status": 0
   },
-  "7a5867c0-02c3-47ca-bb18-2e8bf7221f94": {
-    "id": "7a5867c0-02c3-47ca-bb18-2e8bf7221f94",
-    "title": "Жёстко повайбить",
-    "description": "",
-    "status": 2,
-    "time_spent": 940
+  "341db816-3396-4ec0-9764-9fcfd6be0d00": {
+    "id": "341db816-3396-4ec0-9764-9fcfd6be0d00",
+    "title": "Be better",
+    "description": "just sleep more",
+    "status": 1,
+    "started_at": "2026-05-01T23:34:32.4645535+07:00"
   },
-  "d999fdf5-e58b-4bbf-ae01-6f39459f7cbc": {
-    "id": "d999fdf5-e58b-4bbf-ae01-6f39459f7cbc",
-    "title": "Гитнуть",
+  "49d07166-2c45-4f72-aa15-87df57436039": {
+    "id": "49d07166-2c45-4f72-aa15-87df57436039",
+    "title": "OMAGA",
     "description": "",
-    "status": 2
+    "status": 0,
+    "time_spent": 5
+  },
+  "792be755-72ed-47fa-86e4-8ddd05a64e71": {
+    "id": "792be755-72ed-47fa-86e4-8ddd05a64e71",
+    "title": "Be improved",
+    "description": "just use AI",
+    "status": 1,
+    "started_at": "2026-05-01T23:34:21.4675769+07:00"
+  },
+  "b803adc7-98b1-4873-b235-40f51b36af38": {
+    "id": "b803adc7-98b1-4873-b235-40f51b36af38",
+    "title": "Vibe, only vibe",
+    "description": "",
+    "status": 0
   }
 }
