@@ -3,7 +3,7 @@
 A lightweight task tracking service with an HTMX-powered web interface and a JSON REST API.
 
 <div align="center">
-  <img src="docs/screenshot.png" alt="Task Service Screenshot" width="800" />
+  <img src="docs/screenshot.webp" alt="Task Service Screenshot" width="800" />
 </div>
 
 ---
