@@ -3,6 +3,8 @@ package http
 import (
 	"fmt"
 	"html/template"
+	"time"
+
 	"task-service/internal/storage"
 )
 
@@ -116,6 +118,19 @@ func renderTaskCard(t storage.Task, isDraft bool) string {
 		html += fmt.Sprintf(`<div class="task-desc">%s</div>`, t.Description)
 	}
 
+	// Timer display
+	if t.Status == storage.InProgress && t.StartedAt != nil {
+		// Live timer: JS will update this every second
+		totalSecs := t.TimeSpent + int64(time.Since(*t.StartedAt).Seconds())
+		html += fmt.Sprintf(`<div class="task-timer" data-started="%s" data-accumulated="%d">⏱ %s</div>`,
+			t.StartedAt.Format(time.RFC3339),
+			t.TimeSpent,
+			storage.FormatDuration(totalSecs))
+	} else if t.Status == storage.Done && t.TimeSpent > 0 {
+		html += fmt.Sprintf(`<div class="task-time">⏱ %s</div>`,
+			storage.FormatDuration(t.TimeSpent))
+	}
+
 	html += `<div class="task-actions">`
 
 	if nextStatus != "" {
@@ -199,6 +214,9 @@ const indexHTML = `<!DOCTYPE html>
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<title>Task Service</title>
+	<link rel="preconnect" href="https://fonts.googleapis.com">
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+	<link href="https://fonts.googleapis.com/css2?family=Playwrite+DE+SAS:wght@100..400&display=swap" rel="stylesheet">
 	<script src="https://unpkg.com/htmx.org@2.0.4"></script>
 	<style>
 		/* ===== Reset & Base ===== */
@@ -213,7 +231,10 @@ const indexHTML = `<!DOCTYPE html>
 		}
 
 		body {
-			font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+			font-family: 'Inter', Arial, system-ui, -apple-system, sans-serif;
+			font-size: 16px;
+			font-weight: 400;
+			line-height: 1.60;
 			background: linear-gradient(135deg, #0f0a1a 0%, #1a1030 25%, #2b1e3e 50%, #1a1030 75%, #0f0a1a 100%);
 			background-attachment: fixed;
 			color: #e6e6fa;
@@ -262,16 +283,20 @@ const indexHTML = `<!DOCTYPE html>
 		}
 
 		.page-header h1 {
+			font-family: 'Playwrite DE SAS', Georgia, 'Times New Roman', serif;
 			font-size: 1.75rem;
-			font-weight: 700;
+			font-weight: 500;
+			line-height: 1.20;
 			background: linear-gradient(135deg, #e6e6fa 0%, #a490c2 50%, #e6e6fa 100%);
 			-webkit-background-clip: text;
 			-webkit-text-fill-color: transparent;
 			background-clip: text;
-			letter-spacing: 0.02em;
+			letter-spacing: normal;
 		}
 
 		.page-header .draft-count {
+			font-family: 'Inter', Arial, system-ui, sans-serif;
+			font-weight: 400;
 			color: #a490c2;
 			-webkit-text-fill-color: #a490c2;
 		}
@@ -287,20 +312,22 @@ const indexHTML = `<!DOCTYPE html>
 		.add-task-row {
 			display: flex;
 			flex-direction: column;
-			gap: 8px;
+			gap: 10px;
 			flex-shrink: 0;
 		}
 
 		.add-task-row input[type="text"],
 		.add-task-row textarea {
 			width: 100%;
-			padding: 10px 14px;
-			border: 1px solid rgba(164, 144, 194, 0.25);
-			border-radius: 10px;
+			padding: 12px 16px;
+			border: 1px solid rgba(164, 144, 194, 0.20);
+			border-radius: 12px;
 			background: rgba(43, 30, 62, 0.6);
 			color: #e6e6fa;
-			font-size: 0.88rem;
-			font-family: inherit;
+			font-family: 'Inter', Arial, system-ui, sans-serif;
+			font-size: 1rem;
+			font-weight: 400;
+			line-height: 1.60;
 			outline: none;
 			transition: border-color 0.2s, box-shadow 0.2s;
 			backdrop-filter: blur(8px);
@@ -309,7 +336,7 @@ const indexHTML = `<!DOCTYPE html>
 
 		.add-task-row input[type="text"] {
 			padding: 12px 16px;
-			font-size: 0.95rem;
+			font-size: 1.06rem;
 		}
 
 		.add-task-row textarea {
@@ -325,8 +352,8 @@ const indexHTML = `<!DOCTYPE html>
 
 		.add-task-row input:focus,
 		.add-task-row textarea:focus {
-			border-color: #a490c2;
-			box-shadow: 0 0 0 3px rgba(164, 144, 194, 0.15);
+			border-color: #3898ec;
+			box-shadow: 0px 0px 0px 1px #3898ec, 0px 0px 0px 3px rgba(56, 152, 236, 0.15);
 		}
 
 		.add-task-row .form-actions {
@@ -337,56 +364,68 @@ const indexHTML = `<!DOCTYPE html>
 		/* ===== Buttons ===== */
 		.btn {
 			border: none;
-			border-radius: 10px;
 			cursor: pointer;
-			font-size: 0.9rem;
-			font-weight: 600;
+			font-family: 'Inter', Arial, system-ui, sans-serif;
+			font-size: 1rem;
+			font-weight: 500;
+			line-height: 1.25;
 			transition: all 0.2s;
 		}
 
 		.btn-primary {
-			padding: 10px 20px;
+			padding: 8px 16px 8px 12px;
 			background: #3d3266;
 			color: #c4b8d9;
-			border: 1px solid rgba(164, 144, 194, 0.18);
+			border-radius: 12px;
+			box-shadow: #3d3266 0px 0px 0px 0px, rgba(164, 144, 194, 0.25) 0px 0px 0px 1px;
 		}
 
 		.btn-primary:hover {
 			background: #4a3f75;
-			border-color: rgba(164, 144, 194, 0.3);
+			box-shadow: #4a3f75 0px 0px 0px 0px, rgba(164, 144, 194, 0.35) 0px 0px 0px 1px;
 		}
 
 		.btn-primary:active {
 			background: #352b59;
+			box-shadow: inset 0px 0px 0px 1px rgba(164, 144, 194, 0.15);
 		}
 
 		.btn-action {
-			padding: 5px 12px;
-			font-size: 0.78rem;
-			border-radius: 6px;
+			padding: 5px 12px 5px 8px;
+			font-size: 0.94rem;
+			border-radius: 8px;
 		}
 
 		.btn-next {
 			background: rgba(74, 78, 143, 0.5);
 			color: #a490c2;
-			border: 1px solid rgba(164, 144, 194, 0.2);
+			box-shadow: rgba(74, 78, 143, 0.5) 0px 0px 0px 0px, rgba(164, 144, 194, 0.20) 0px 0px 0px 1px;
 		}
 
 		.btn-next:hover {
 			background: rgba(74, 78, 143, 0.7);
 			color: #e6e6fa;
-			border-color: rgba(164, 144, 194, 0.4);
+			box-shadow: rgba(74, 78, 143, 0.7) 0px 0px 0px 0px, rgba(164, 144, 194, 0.35) 0px 0px 0px 1px;
+		}
+
+		.btn-next:active {
+			box-shadow: inset 0px 0px 0px 1px rgba(164, 144, 194, 0.15);
 		}
 
 		.btn-delete {
 			background: rgba(180, 60, 60, 0.3);
 			color: #e08888;
-			border: 1px solid rgba(180, 60, 60, 0.25);
+			box-shadow: rgba(180, 60, 60, 0.3) 0px 0px 0px 0px, rgba(180, 60, 60, 0.25) 0px 0px 0px 1px;
 		}
 
 		.btn-delete:hover {
 			background: rgba(180, 60, 60, 0.5);
 			color: #ffaaaa;
+			box-shadow: rgba(180, 60, 60, 0.5) 0px 0px 0px 0px, rgba(180, 60, 60, 0.35) 0px 0px 0px 1px;
+		}
+
+		.btn-delete:active {
+			box-shadow: inset 0px 0px 0px 1px rgba(180, 60, 60, 0.15);
 		}
 
 		/* ===== Panels ===== */
@@ -403,6 +442,7 @@ const indexHTML = `<!DOCTYPE html>
 			gap: 8px;
 			flex: 1;
 			min-height: 0;
+			overflow-x: auto;
 		}
 
 		.right-stack {
@@ -416,10 +456,12 @@ const indexHTML = `<!DOCTYPE html>
 		.panel {
 			background: rgba(43, 30, 62, 0.45);
 			border: 1px solid rgba(164, 144, 194, 0.12);
-			border-radius: 14px;
-			padding: 16px;
+			border-radius: 16px;
+			padding: 20px 24px;
 			backdrop-filter: blur(12px);
 			overflow-y: auto;
+			min-width: 240px;
+			max-width: 480px;
 		}
 
 		.panel-draft {
@@ -435,11 +477,14 @@ const indexHTML = `<!DOCTYPE html>
 
 		/* ===== Panel Title ===== */
 		.panel-title {
+			font-family: 'Inter', Arial, system-ui, sans-serif;
 			font-size: 0.75rem;
+			font-weight: 500;
 			text-transform: uppercase;
-			letter-spacing: 0.08em;
+			letter-spacing: 0.12px;
+			line-height: 1.60;
 			color: #a490c2;
-			margin-bottom: 10px;
+			margin-bottom: 12px;
 			display: flex;
 			align-items: center;
 			gap: 8px;
@@ -448,20 +493,23 @@ const indexHTML = `<!DOCTYPE html>
 		.count-badge {
 			background: rgba(164, 144, 194, 0.15);
 			color: #a490c2;
-			font-size: 0.7rem;
+			font-size: 0.75rem;
+			font-weight: 500;
 			padding: 1px 8px;
 			border-radius: 10px;
-			font-weight: 600;
+			letter-spacing: 0.12px;
 		}
 
 		/* ===== Task Card ===== */
 		.task-card {
 			background: rgba(74, 78, 143, 0.12);
 			border: 1px solid rgba(164, 144, 194, 0.08);
-			border-radius: 10px;
-			padding: 10px 12px;
-			margin-bottom: 8px;
+			border-radius: 12px;
+			padding: 12px 16px;
+			margin-bottom: 10px;
 			transition: all 0.2s;
+			overflow: hidden;
+			min-width: 0;
 		}
 
 		.task-card:last-child {
@@ -470,7 +518,8 @@ const indexHTML = `<!DOCTYPE html>
 
 		.task-card:hover {
 			background: rgba(74, 78, 143, 0.2);
-			border-color: rgba(164, 144, 194, 0.18);
+			box-shadow: rgba(74, 78, 143, 0.2) 0px 0px 0px 0px, rgba(164, 144, 194, 0.18) 0px 0px 0px 1px;
+			border-color: transparent;
 		}
 
 		.task-card.status-done {
@@ -512,37 +561,65 @@ const indexHTML = `<!DOCTYPE html>
 		}
 
 		.task-title {
-			font-size: 0.9rem;
+			font-family: 'Playwrite DE SAS', Georgia, 'Times New Roman', serif;
+			font-size: 1.06rem;
 			font-weight: 500;
+			line-height: 1.30;
 			color: #e6e6fa;
 			flex: 1;
+			min-width: 0;
 			overflow: hidden;
 			text-overflow: ellipsis;
 			white-space: nowrap;
 		}
 
 		.task-desc {
-			font-size: 0.78rem;
+			font-family: 'Inter', Arial, system-ui, sans-serif;
+			font-size: 0.94rem;
+			font-weight: 400;
+			line-height: 1.60;
 			color: rgba(164, 144, 194, 0.6);
-			margin-bottom: 6px;
+			margin-bottom: 8px;
 			padding-left: 16px;
+			word-break: break-word;
+			overflow-wrap: break-word;
+			max-height: 4.8em;
 			overflow: hidden;
-			text-overflow: ellipsis;
-			white-space: nowrap;
+		}
+
+		/* ===== Task Timer ===== */
+		.task-timer,
+		.task-time {
+			font-family: 'Inter', Arial, system-ui, sans-serif;
+			font-size: 0.88rem;
+			font-weight: 400;
+			line-height: 1.60;
+			color: #7b8ef5;
+			padding-left: 16px;
+			margin-bottom: 8px;
+			font-variant-numeric: tabular-nums;
+		}
+
+		.task-time {
+			color: rgba(107, 207, 143, 0.7);
 		}
 
 		.task-actions {
 			display: flex;
-			gap: 6px;
+			gap: 8px;
 			justify-content: flex-end;
+			margin-top: 4px;
 		}
 
 		/* ===== Empty State ===== */
 		.empty-state {
 			text-align: center;
 			color: rgba(164, 144, 194, 0.35);
-			font-size: 0.82rem;
-			padding: 16px 0;
+			font-family: 'Playwrite DE SAS', Georgia, 'Times New Roman', serif;
+			font-size: 1rem;
+			font-weight: 400;
+			line-height: 1.60;
+			padding: 20px 0;
 			font-style: italic;
 		}
 
@@ -554,11 +631,55 @@ const indexHTML = `<!DOCTYPE html>
 			background: transparent;
 		}
 		::-webkit-scrollbar-thumb {
-			background: rgba(164, 144, 194, 0.2);
+			background: rgba(164, 144, 194, 0.15);
 			border-radius: 3px;
 		}
 		::-webkit-scrollbar-thumb:hover {
-			background: rgba(164, 144, 194, 0.35);
+			background: rgba(164, 144, 194, 0.25);
+		}
+
+		/* ===== Mobile ===== */
+		@media (max-width: 640px) {
+			.container {
+				height: 100vh;
+				height: 100dvh;
+				padding: 16px 12px;
+			}
+
+			.page-header h1 {
+				font-size: 1.6rem;
+				line-height: 1.10;
+			}
+
+			#main-area {
+				flex: 1;
+				min-height: 0;
+			}
+
+			.panels {
+				flex-direction: column;
+				flex: 1;
+				min-height: 0;
+				overflow-y: auto;
+				scroll-snap-type: y mandatory;
+			}
+
+			.right-stack {
+				display: contents;
+			}
+
+			.panel-draft,
+			.panel-progress,
+			.panel-done {
+				flex: none;
+				min-width: 0;
+				max-width: none;
+				min-height: 100%;
+				scroll-snap-align: start;
+				overflow-y: auto;
+				border-radius: 12px;
+				padding: 16px 20px;
+			}
 		}
 	</style>
 </head>
@@ -596,5 +717,23 @@ const indexHTML = `<!DOCTYPE html>
 			</div>
 		</div>
 	</div>
+	<script>
+		function fmtDur(s) {
+			if (s < 60) return s + 's';
+			if (s < 3600) return Math.floor(s/60) + 'm ' + (s%60) + 's';
+			if (s < 86400) return Math.floor(s/3600) + 'h ' + Math.floor((s%3600)/60) + 'm';
+			return Math.floor(s/86400) + 'd ' + Math.floor((s%86400)/3600) + 'h';
+		}
+		function updateTimers() {
+			document.querySelectorAll('.task-timer[data-started]').forEach(function(el) {
+				var started = new Date(el.dataset.started);
+				var acc = parseInt(el.dataset.accumulated) || 0;
+				var elapsed = acc + Math.floor((Date.now() - started.getTime()) / 1000);
+				el.textContent = '\u23F1 ' + fmtDur(elapsed);
+			});
+		}
+		updateTimers();
+		setInterval(updateTimers, 1000);
+	</script>
 </body>
 </html>`

@@ -6,6 +6,7 @@ import (
 	"task-service/internal/storage"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
 )
 
 type Server struct {
@@ -14,6 +15,11 @@ type Server struct {
 
 func NewServer(actor *storage.Actor) *Server {
 	r := chi.NewRouter()
+
+	// Middleware
+	r.Use(middleware.Recoverer)
+	r.Use(RequestLogger)
+
 	h := NewHandler(actor)
 
 	// Static assets

@@ -102,7 +102,7 @@ func (h *Handler) UpdateStatus(w http.ResponseWriter, r *http.Request) {
 	}
 
 	task := *res.Task
-	task.Status = status
+	task.TransitionTo(status)
 
 	updateCmd := storage.UpdateCommand{ID: id, Task: task, Result: make(chan storage.Result, 1)}
 	res = h.sendCommand(updateCmd)
@@ -211,12 +211,21 @@ func (h *Handler) APIUpdateTask(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	cmd := storage.UpdateCommand{
-		ID:     id,
-		Task:   storage.Task{Title: input.Title, Description: input.Description, Status: status},
-		Result: make(chan storage.Result, 1),
+	// Fetch existing task to preserve time tracking fields
+	getCmd := storage.GetByIDCommand{ID: id, Result: make(chan storage.Result, 1)}
+	res := h.sendCommand(getCmd)
+	if res.Err != nil {
+		http.Error(w, res.Err.Error(), http.StatusNotFound)
+		return
 	}
-	res := h.sendCommand(cmd)
+
+	task := *res.Task
+	task.Title = input.Title
+	task.Description = input.Description
+	task.TransitionTo(status)
+
+	updateCmd := storage.UpdateCommand{ID: id, Task: task, Result: make(chan storage.Result, 1)}
+	res = h.sendCommand(updateCmd)
 	if res.Err != nil {
 		http.Error(w, res.Err.Error(), http.StatusNotFound)
 		return

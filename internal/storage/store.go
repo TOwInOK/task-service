@@ -6,7 +6,9 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
+	"time"
 )
 
 const lockFileName = "lock.json"
@@ -90,6 +92,8 @@ func loadFromFiles(dir string) (map[string]Task, error) {
 //
 //	# Task Title
 //	- Status # Draft, In Progress, Done
+//	- Started: 2024-01-15T10:30:00Z   (optional)
+//	- Time: 3600                        (optional, seconds)
 //	Task description (может быть многострочным)
 func readTaskFile(path string) (*Task, error) {
 	data, err := os.ReadFile(path)
@@ -122,10 +126,32 @@ func readTaskFile(path string) (*Task, error) {
 		return nil, fmt.Errorf("parse status in %s: %w", path, err)
 	}
 
-	// Строки 3+: описание
+	// Строки 3+: parse optional metadata, then description
+	var startedAt *time.Time
+	var timeSpent int64
+	var descLines []string
+
+	for _, line := range lines[2:] {
+		if strings.HasPrefix(line, "- Started: ") {
+			val := strings.TrimPrefix(line, "- Started: ")
+			if t, parseErr := time.Parse(time.RFC3339, val); parseErr == nil {
+				startedAt = &t
+			}
+			continue
+		}
+		if strings.HasPrefix(line, "- Time: ") {
+			val := strings.TrimPrefix(line, "- Time: ")
+			if n, parseErr := strconv.ParseInt(val, 10, 64); parseErr == nil {
+				timeSpent = n
+			}
+			continue
+		}
+		descLines = append(descLines, line)
+	}
+
 	var description string
-	if len(lines) > 2 {
-		description = strings.Join(lines[2:], "\n")
+	if len(descLines) > 0 {
+		description = strings.Join(descLines, "\n")
 		description = strings.TrimRight(description, "\n")
 	}
 
@@ -133,6 +159,8 @@ func readTaskFile(path string) (*Task, error) {
 		Title:       title,
 		Status:      status,
 		Description: description,
+		StartedAt:   startedAt,
+		TimeSpent:   timeSpent,
 	}, nil
 }
 
@@ -144,6 +172,16 @@ func writeTaskFile(dir string, task Task) error {
 	sb.WriteString("\n- ")
 	sb.WriteString(task.Status.String())
 	sb.WriteString(" # Draft, In Progress, Done\n")
+	if task.StartedAt != nil {
+		sb.WriteString("- Started: ")
+		sb.WriteString(task.StartedAt.Format(time.RFC3339))
+		sb.WriteString("\n")
+	}
+	if task.TimeSpent > 0 {
+		sb.WriteString("- Time: ")
+		sb.WriteString(strconv.FormatInt(task.TimeSpent, 10))
+		sb.WriteString("\n")
+	}
 	if task.Description != "" {
 		sb.WriteString(task.Description)
 		sb.WriteString("\n")
